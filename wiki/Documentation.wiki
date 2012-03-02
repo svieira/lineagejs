@@ -1,0 +1,446 @@
+#summary Documentation for Lineage
+#labels Featured,Documentation,API
+
+This page documents the usage and API of Lineage *2.x* and up. Lineage 1.x was never publicly released and had a different API.
+
+<wiki:toc max_depth="3" />
+
+= Introduction =
+
+Lineage is about creating constructors and their associated prototypes using simple, concise syntax that encourages proper function names and use of scoping functions (the module pattern). Since code is worth a thousand words, let's jump right into it.
+
+= Usage =
+
+== Basic Use ==
+
+{{{
+var Thing = Lineage.create(function(p) {
+    p.nifty = Thing_nifty;
+    function Thing_nifty() {
+        console.log("I'm a nifty thing!");
+    }
+});
+
+var t = new Thing();
+t.nifty(); // Logs "I'm a nifty thing"
+}}}
+
+Now that just defines one thing, it doesn't define a hierarchy, but it nicely demonstrates the basics:
+
+ * You call `Lineage.create` to create a new constructor function.
+ * You typically pass in a reference to a function (although you can pass in an object instead; more below).
+ * Lineage calls the function, passing in a blank specification object you can add properties to. In the above, we've called the object *`p`* (for "public" -- it defines the things you make public), but of course you can call it anything you want.
+ * Lineage will copy the properties you add to the specification object to the `prototype` object of the constructor function it creates.
+ * `Lineage.create` returns a reference to the generated constructor function.
+
+Note how easy it was to give the function a real name, and in particular a name that will be useful when looking at a call stack in a debugger and such. (It would be even easier if we could have said `p.nifty = function Thing_nifty() { ... };`, but [http://blog.niftysnippets.org/2010/09/double-take.html some JavaScript engines get that very wrong].)
+
+Also note that the function you provide to `Lineage.create` is a great place to put private functions and data your implementation may need, as it nicely wraps them, keeping them out of the containing scope.
+
+== Initializers ==
+
+Many times, you'll want your constructor function to accept arguments used to initialize the new object. You can do that with Lineage by defining a function called `initialize`. The constructor Lineage generates will call `initialize` after creating the object:
+
+{{{
+var Thing = Lineage.create(function(p) {
+    p.initialize = Thing_initialize;
+    function Thing_initialize(name) {
+        this.name = name;
+    }
+
+    p.nifty = Thing_nifty;
+    function Thing_nifty() {
+        console.log("I'm a nifty thing named '" + this.name + "'!");
+    }
+});
+
+var t = new Thing("Fred");
+t.nifty(); // Logs "I'm a nifty thing named 'Fred'!"
+}}}
+
+== Hierarchy ==
+
+Lineage makes prototypical hierarchies easy and declarative: The first argument to `Lineage.create` can be a "base" constructor:
+
+{{{
+var Parent = Lineage.create(function(p) {
+    p.nifty = Parent_nifty;
+    function Parent_nifty() {
+        console.log("Parent_nifty");
+    }
+    p.spiffy = Parent_spiffy;
+    function Parent_spiffy() {
+        console.log("Parent_spiffy");
+    }
+});
+
+var Child = Lineage.create(Parent, function(p) {
+    p.nifty = Child_nifty;
+    function Child_nifty() {
+        console.log("Child_nifty");
+    }
+});
+
+var p = new Parent();
+p.spiffy(); // Logs "Parent_spiffy"
+p.nifty();  // Logs "Parent_nifty"
+
+var c = new Child();
+c.spiffy(); // Logs "Parent_spiffy"
+c.nifty();  // Logs "Child_nifty"
+}}}
+
+In that example, `Parent` defines the functions `nifty` and `spiffy`. `Child` is based on `Parent` and so inherits `Parent`'s functions, but then overrides `nifty` with its own version. So when we call `nifty`, we see the version specific to the constructor used, but when we call `spiffy` we see the parent's version in both cases, since `Child` doesn't override it.
+
+== Calling base, are you there base? ==
+
+In our example above, suppose `Child_nifty` wanted to call `Parent_nifty` (e.g., call the base version of a function, sometimes called a "supercall"), how would it do that? The standard !JavaScript way would be to do this:
+
+{{{
+function Child_nifty() {
+    Parent.prototype.nifty.call(this); // Non-Lineage, plain JavaScript way
+}
+}}}
+
+Ugh, you have to write `Parent.prototype` all over the place, which is both verbose and repetitive (all those changes, if you decide to insert a new inheritance layer between them). _(If you're not familiar with the_ `call` _and_ `apply` _features of !JavaScript functions, see [http://es5.github.com/#x15.3.4.3 §15.3.4.3] and [http://es5.github.com/#x15.3.4.4 §15.3.4.4] of the spec. Basically, they let you call a function and tell it what_ `this` _should be.)_
+
+With Lineage, you have a simpler, more concise option: The factory function you pass into `Lineage.create` receives a second argument we haven't mentioned yet: The base prototype. So:
+{{{
+var Parent = Lineage.create(function(p) {
+    p.nifty = Parent_nifty;
+    function Parent_nifty() {
+        console.log("Parent_nifty");
+    }
+    p.spiffy = Parent_spiffy;
+    function Parent_spiffy() {
+        console.log("Parent_spiffy");
+    }
+});
+
+// Note second argument -----------------------v
+var Child = Lineage.create(Parent, function(p, base) {
+    p.nifty = Child_nifty;
+    function Child_nifty() {
+        base.nifty.call(this);   // <--- Supercall
+        console.log("Child_nifty");
+    }
+});
+
+var p = new Parent();
+p.spiffy(); // Logs "Parent_spiffy"
+p.nifty();  // Logs "Parent_nifty"
+
+var c = new Child();
+c.spiffy(); // Logs "Parent_spiffy"
+c.nifty();  // Logs "Parent_nifty" then "Child_nifty"
+}}}
+
+So instead of
+{{{
+Parent.prototype.nifty.call(this);
+}}}
+we have
+{{{
+base.nifty.call(this);
+}}}
+
+Much more concise, and we don't have to repeat the name of the parent constructor all over the place (which amongst other things makes re-basing a constructor -- moving it elsewhere in the hierarchy -- difficult). And of course, you can call the second argument anything you like, it doesn't have to be `base`. It's probably best to be consistent in what you use, though, whether you use `base` or `$super` or `s` or `fluglehorn`... (Don't use `super`, though; it's a reserved word.)
+
+=== Base `initialize` ===
+
+All constructors created with Lineage have an `initialize` function on the prototype. When you define a new base constructor, Lineage supplies the `initialize` function if you don't; and of course, derived constructors inherit the `initialize` function of their base. Lineage does not create the call to your base's `initialize` function automatically (on the basis that the function signature of your derived `initialize` may be different from the base version), so in derived constructor's `initialize` functions, you must call the base version explicitly, and typically you want to do that *first thing*, before you do any other work in your `initialize` function:
+
+{{{
+var Child = Lineage.create(Parent, function(p, base) {
+    p.initialize = Child_initialize;
+    function Child_initialize(baseArg, childArg) {
+        // Chain to base
+        base.initialize.call(this, baseArg);
+
+        // ...other stuff...
+    }
+}}}
+
+There note that we assumed the signature of `Parent#initialize` is different from that of `Child#initialize`. If they're the same, though (both take the same arguments), you can do this instead:
+
+{{{
+base.initialize.apply(this, arguments);
+}}}
+
+Note, though, that using the `arguments` pseudo-array has [http://jsperf.com/using-declared-arguments-vs-the-arguments-pseudo-array performance implications] on many JavaScript engines, so it's best to avoid using it if you don't have to. (They're not _terrible_, don't worry too much about it, but still.)
+
+== Private Data, Private Functions ==
+
+The function you pass into `Lineage.create` is a handy place to put private data and/or functions for your constructor function's prototype functions to have shared, but completely private, access to:
+
+{{{
+var Thing = Lineage.create(function(p) {
+    // Private data
+    var foo = "bar";
+
+    // A private function
+    function msg(text) {
+        console.log(text);
+    }
+
+    // Another private function, this one uses `this`
+    function shout() {
+        console.log(this.name);
+    }
+
+    // Another private function, this one uses `t`
+    function shoutAgain(t) {
+        console.log(t.name);
+    }
+
+    // A public initializer function
+    p.initialize = Thing_initialize;
+    function Thing_initialize(name) {
+        this.name = name;
+    }
+
+    // A public function
+    p.nifty = Thing_nifty;
+    function Thing_nifty() {
+        // Use the private function and data.
+        // Note that `msg` is not instance-specific in this case.
+        msg("Foo is " + foo);
+    }
+
+    // Another public function
+    p.spiffy = Thing_spiffy;
+    function Thing_spiffy() {
+       // Use our private `shout` function. Note that
+       // the way we call it makes it instance-specific.
+       shout.call(this);
+    }
+
+    // Another public function
+    p.cool = Thing_cool;
+    function Thing_cool() {
+       // Use our private `shoutAgain` function, passing
+       // in `this` rather than using `call`.
+       // This may appeal to the procedural programmers out there.
+       shoutAgain(this);
+    }
+});
+}}}
+
+= API =
+
+The Lineage API is very simple: Two functions:
+
+== `Lineage.create` ==
+
+The main Lineage function: Creates a constructor with a prototype defined by the specification functions / objects you provide, using a given optional base.
+
+==== Arguments ====
+
+ * `base` - (Optional function) The base constructor, if any.
+ * `...` - (Optional) Zero or more specification functions or objects:
+  * A _specification function_ is a function that Lineage will call to define the prototype of the constructor. This is what all of the preceding examples have used. The function is called with a blank specification object and the base prototype (if any). The function adds properties to the specification object that should be put on the constructor's prototype. If the specification function doesn't return anything (or doesn't return an object), the provided specification object is used. But the function can override that by returning a different object to use instead.
+  * A _specification object_ is just an object to use directly to define the properties for the prototype; all of the properties of the specification object (including inherited properties) are copied to the constructor's prototype.
+ You can mix specification objects and specification functions as you wish.
+
+asdlkfjalskdfj aslkf lasjkdf 
+
+==== Return Value ====
+
+A reference to the generated constructor function.
+
+==== Examples ====
+
+===== Example 1: Theme and Variations =====
+
+The following demonstrates the various options available for specification objects and functions. All of the following define exactly the same constructor and prototype *except* that where function expressions rather than declarations are used, the resulting functions have no names:
+
+{{{
+// Example 1.1: Uses a specification function, adds properties to
+// the given specification object. Functions have real names.
+var Thing = Lineage.create(function(p) {
+
+    p.nifty = Thing_nifty;
+    function Thing_nifty() {
+    }
+
+    p.spiffy = Thing_spiffy;
+    function Thing_spiffy() {
+    }
+});
+
+// Example 1.2: Uses a specification function, but uses anonymous
+// functions -- this is just to demonstrate that you don't *have* to
+// use named functions if you prefer not to.
+var Thing = Lineage.create(function() {
+
+    p.nifty = function() {    // *DIFF* Anonymous function
+    };
+
+    p.spiffy = function() {   // *DIFF* Anonymous function
+    };
+});
+
+// Example 1.3: Uses a specification function, but returns its own
+// object rather than using the one passed in. Functions have real
+// names (but you could do the anonymous thing if you liked).
+var Thing = Lineage.create(function(p) {
+
+    // *DIFF* Declare our own variable and assign blank object to it
+    var p = {};
+
+    p.nifty = Thing_nifty;
+    function Thing_nifty() {
+    }
+
+    p.spiffy = Thing_spiffy;
+    function Thing_spiffy() {
+    }
+
+    // *DIFF* Return the object so Lineage knows to use it
+    return p;
+});
+
+// Example 1.4: Uses a specification object, not function.
+// As we have no scoping function, we end up using anonymous functions
+// rather than functions with names.
+var Thing = Lineage.create({ // *DIFF* No function, just an object
+    nifty: function() {      // *DIFF* Functions as property initializers
+    },
+
+    spiffy: function() {
+    }
+});
+}}}
+
+The first and second forms (Example 1.1 and 1.2) are the primary forms you'd normally use; which you use depends on whether you want named functions. Example 1.3 is just in case you already have an object you want to return. There are several reasons to avoid the third form (Example 1.4), not least that you don't get access to the base prototype (because Lineage has no function to pass it into), your functions end up being anonymous, and you have no handy scope for private functions and data (although of course, you may have the call to Lineage wrapped in a scoping function already).
+
+===== Example 2: Hierarchy =====
+
+Most of this we've seen before, but here's a complete implementation of a three-tier hierarchy:
+
+{{{
+var Parent = Lineage.create(function(p) {
+    // Standard initialize, in this case accepting an argument
+    p.initialize = Parent_initialize;
+    function Parent_initialize(name) {
+        this.name = name;
+    }
+
+    // Some nifty function
+    p.nifty = Parent_nifty;
+    function Parent_nifty(x) {
+        console.log("Parent(" + this.name + ").nifty(" + x + ")");
+    }
+});
+
+var Child = Lineage.create(Parent, function(p, base) {
+    // Standard initialize, chains to base
+    p.initialize = Child_initialize;
+    function Child_initialize(name) {
+        base.initialize.call(this, name);
+    }
+
+    // Overrides `nifty`, chains to base
+    p.nifty = Child_nifty;
+    function Child_nifty(x) {
+        base.nifty.call(this, x);
+        console.log("Child(" + this.name + ").nifty(" + x + ")");
+    }
+
+    // Adds a new function
+    p.added = Child_added;
+    function Child_added(x) {
+        console.log("Child(" + this.name + ").added(" + x + ")");
+    }
+});
+
+var GrandChild = Lineage.create(Child, function(p, base) {
+    // Standard initialize, chains to base
+    p.initialize = GrandChild_initialize;
+    function GrandChild_initialize(name) {
+        base.initialize.call(this, name);
+    }
+
+    // Doesn't override `nifty`
+
+    // Overrides `added`
+    p.added = GrandChild_added;
+    function GrandChild_added(x) {
+        base.added.call(this, x);
+        console.log("GrandChild(" + this.name + ").added(" + x + ")");
+    }
+});
+}}}
+
+== `Lineage.noConflict` ==
+
+Releases the `Lineage` global symbol, restoring any value it had prior to loading Lineage. This is for the _(fairly unlikely)_ scenario that you have code already using the global symbol `Lineage` and you want to avoid conflicting with it, or you simply prefer not to have any global symbols *at all* and do everything within a scoping function (good for you!).
+
+==== Arguments ====
+
+ * `callback` - An optional callback function. If supplied, when you call `Lineage.noConflict`, Lineage will call this function after restoring the previous global `Lineage` symbol. The function will receive a reference to Lineage as its only argument.
+
+==== Return Value ====
+
+A reference to the Lineage object, so you can assign it to a symbol to use it from.
+
+==== Examples ====
+
+===== Example 2.1: Using the `noConflict` return value =====
+
+Here we use the return value:
+
+{{{
+<!-- A script that defines a Lineage symbol, however unlikely that may be -->
+<script>
+var Lineage = "foo";
+</script>
+<!-- lineage.js -->
+<script src="lineage.js"></script>
+<!-- Code using lineage.js -->
+<script>
+(function() {
+    // Release the `Lineage` symbol, use `L` instead
+    var L = Lineage.noConflict();
+    console.log(Lineage); // Logs "foo"
+    var Thing = L.create(function(p) {
+        p.nifty = Thing_nifty;
+        function Thing_nifty() {
+            // ...
+        }
+    });
+    // ...
+})();
+</script>
+}}}
+
+===== Example 2.2: Using the `noConflict` callback =====
+
+Here we use the callback:
+
+{{{
+<!-- A script that defines a Lineage symbol, however unlikely that may be -->
+<script>
+var Lineage = "foo";
+</script>
+<!-- lineage.js -->
+<script src="lineage.js"></script>
+<!-- Code using lineage.js -->
+<script>
+// Release the `Lineage` symbol, use `L` instead in the callback
+Lineage.noConflict(function(L) {
+    console.log(Lineage); // Logs "foo"
+    var Thing = L.create(function(p) {
+        p.nifty = Thing_nifty;
+        function Thing_nifty() {
+            // ...
+        }
+    });
+    // ...
+});
+</script>
+}}}
+
+= History =
+
+*TBD.* Basically, in 2009 I found out how [http://prototypejs.org Prototype's] `Class` system handled supercalls and was appalled by the inefficiency, so I came up with [http://blog.niftysnippets.org/2009/09/simple-efficient-supercalls-in.html a more efficient way to do them] but the syntax, while trivial to the advanced !JavaScript programmer, was daunting to those with a more casual knowledge of the language. Then, in 2012, I wanted to use my new system and decided to clean it up and create a project for it, and in the process of doing that a *dramatically* better way to do supercalls came to me. Thus was born Lineage 2.0 (1.0 was basically what is in the blog post).

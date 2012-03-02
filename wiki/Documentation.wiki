@@ -1,8 +1,6 @@
 #summary Documentation for Lineage
 #labels Featured,Documentation,API
 
-This page documents the usage and API of Lineage *2.x* and up. Lineage 1.x was never publicly released and had a different API.
-
 <wiki:toc max_depth="3" />
 
 = Introduction =

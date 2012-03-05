@@ -1,0 +1,24 @@
+#summary Comparing code written with Lineage and with plain JavaScript
+#labels Documentation
+
+= Introduction =
+
+This page shows examples of constructors defined using Lineage and using plain !JavaScript, both to show how Lineage simplifies things and so experienced !JavaScript programmers can readily see how to map plain constructs to Lineage.
+
+= Examples =
+
+== Single Constructor with Anonymous Functions ==
+
+*TBD*
+
+== Single Constructor with Named Functions ==
+
+*TBD*
+
+== Three-Level Hierarchy with Anonymous Functions ==
+
+*TBD*
+
+== Three-Level Hierarchy with Named Functions ==
+
+*TBD*

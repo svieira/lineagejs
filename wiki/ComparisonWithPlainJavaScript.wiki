@@ -57,7 +57,7 @@ var Thing = Lineage.define("Thing", function(p) {
 });
 }}}
 
-=== Conclusion ===
+=== Observations ===
 
 In this limited example, Lineage doesn't buy you much -- in fact, it's actually *less* concise because we need the `initialize` function. Any benefits would be subjective, around containing the definition in some kind of structure.
 
@@ -103,7 +103,7 @@ var Thing = Lineage.define("Thing", function(p) {
 });
 }}}
 
-=== Conclusion ===
+=== Observations ===
 
 Roughly the same either way. Again, *if* there are any benefits, they're subjective ones.
 
@@ -226,7 +226,7 @@ var NiftyThing = Lineage.define("NiftyThing", Thing, function(p, pp) {
 });
 }}}
 
-=== Conclusion ===
+=== Observations ===
 
 Lineage does the plumbing for us, the resulting code is shorter.
 
@@ -395,7 +395,7 @@ var ReallyNiftyThing = Lineage.define("ReallyNiftyThing", NiftyThing, function(p
 });
 }}}
 
-=== Conclusion ===
+=== Observations ===
 
 Sure enough, we're now seeing significantly less boilerplate code and that's translating into fewer lines (nearly a quarter fewer), fewer characters, increased reliability (less retyping = fewer mistakse), increased flexibility (if we want to change the boilerplate), and (subjectively) increased clarity.
 
@@ -553,11 +553,11 @@ var ReallyNiftyThing = Lineage.define(NiftyThing, function(p, pp) {
 
 And similarly only small changes here as well.
 
-=== Conclusion ===
+=== Observations ===
 
 The advantages are the same as the version with named functions; making them anonymous didn't buy us anything. The Lineage code eliminates the repeated boilerplate with the same benefits in terms of code size, reliability, flexibility, and clarity.
 
-= Overall Conclusion =
+= Conclusion =
 
 Lineage does nothing for us that we can't do for ourselves. Of course not, it's written in !JavaScript just like our own code is.
 

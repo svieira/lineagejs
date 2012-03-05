@@ -1,6 +1,8 @@
 #summary Documentation for Lineage
 #labels Featured,Documentation,API
 
+*TL;DR*? Check out: [LineageByExample Lineage by Example]
+
 <wiki:toc max_depth="3" />
 
 = Introduction =
@@ -18,8 +20,6 @@ Lineage stays out of your way, but gives you the tools needed to dramatically si
 Since code is worth a thousand words, let's jump right into it.
 
 = Usage =
-
-The following sections show how Lineage is used and have substantial discussion of the concepts and code provided. If you're of the "TL;DR" mold, you might like [LineageByExample Lineage by Example], which has all the code with minimal discussion.
 
 == Basic Use ==
 

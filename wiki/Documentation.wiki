@@ -13,7 +13,7 @@ Lineage is about defining constructor functions and their associated prototypes 
 
  * Calling into the parent prototype's version of a function (e.g., doing a "supercall") easily and efficiently
 
-Lineage stays out of your way, but gives you the tools needed to dramatically simplify creating constructors, prototypes, and lineages with !JavaScript's powerful prototypical inheritance. (To get an idea how much simplicity you gain, check out the [ComparisonWithRawJavaScript comparison with raw JavaScript].)
+Lineage stays out of your way, but gives you the tools needed to dramatically simplify creating constructors, prototypes, and lineages with !JavaScript's powerful prototypical inheritance. (To get an idea how much simplicity you gain, check out the [ComparisonWithPlainJavaScript comparison with plain JavaScript].)
 
 Since code is worth a thousand words, let's jump right into it.
 

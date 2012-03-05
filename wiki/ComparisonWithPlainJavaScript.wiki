@@ -9,9 +9,9 @@ This page shows examples of constructors defined using Lineage and using plain !
 
 = Examples =
 
-== Single Constructor with Two Anonymous Functions ==
+== Example 1: Single Constructor with Two Anonymous Functions ==
 
-=== Plain !JavaScript ===
+=== 1 - Plain !JavaScript ===
 
 {{{
 function Thing(name) {
@@ -25,7 +25,7 @@ Thing.prototype.bye = function() {
 };
 }}}
 
-=== Lineage ===
+=== 1 - Lineage ===
 
 {{{
 var Thing = Lineage.define("Thing", {
@@ -57,13 +57,13 @@ var Thing = Lineage.define("Thing", function(p) {
 });
 }}}
 
-=== Observations ===
+=== 1 - Observations ===
 
 In this limited example, Lineage doesn't buy you much -- in fact, it's actually *less* concise because we need the `initialize` function. Any benefits would be subjective, around containing the definition in some kind of structure.
 
-== Single Constructor with Two Named Functions ==
+== Example 2: Single Constructor with Two Named Functions ==
 
-=== Plain !JavaScript ===
+=== 2 - Plain !JavaScript ===
 
 {{{
 var Thing = (function() {
@@ -84,7 +84,7 @@ var Thing = (function() {
 })();
 }}}
 
-=== Lineage ===
+=== 2 - Lineage ===
 
 {{{
 var Thing = Lineage.define("Thing", function(p) {
@@ -103,13 +103,13 @@ var Thing = Lineage.define("Thing", function(p) {
 });
 }}}
 
-=== Observations ===
+=== 2 - Observations ===
 
 Roughly the same either way. Again, *if* there are any benefits, they're subjective ones.
 
-== Two-Level Hierarchy with Named Functions ==
+== Example 3: Two-Level Hierarchy with Named Functions ==
 
-=== Plain !JavaScript ===
+=== 3 - Plain !JavaScript ===
 
 {{{
 var Thing = (function() {
@@ -174,7 +174,7 @@ var NiftyThing = (function(parent) {
 
 Now we get into needing to supply the plumbing for inheritance. It's getting verbose, and if we have to do it a second time, repetitive. We have to create a function (called `proxy`) to generate the prototype for our child constructor, since we don't want to call the parent constructor as it expects to receive arguments. Then we have to put the parent prototype on the proxy, call it to create the child prototype, set the child prototype constructor correctly, and grab references to the child and parent prototypes for convenient use. We could tuck some of that away in a utility function, but of course, that's what Lineage is -- a utility toolkit.
 
-=== Lineage ===
+=== 3 - Lineage ===
 
 {{{
 var Thing = Lineage.define("Thing", function(p) {
@@ -226,13 +226,13 @@ var NiftyThing = Lineage.define("NiftyThing", Thing, function(p, pp) {
 });
 }}}
 
-=== Observations ===
+=== 3 - Observations ===
 
 Lineage does the plumbing for us, the resulting code is shorter.
 
-== Three-Level Hierarchy with Named Functions ==
+== Example 4: Three-Level Hierarchy with Named Functions ==
 
-=== Plain !JavaScript ===
+=== 4 - Plain !JavaScript ===
 
 {{{
 var Thing = (function() {
@@ -324,7 +324,7 @@ var ReallyNiftyThing = (function(parent) {
 
 Now we're really starting to see repeated blocks of boilerplate code; a classic case for putting things in a toolkit.
 
-=== Lineage ===
+=== 4 - Lineage ===
 
 {{{
 var Thing = Lineage.define("Thing", function(p) {
@@ -395,15 +395,15 @@ var ReallyNiftyThing = Lineage.define("ReallyNiftyThing", NiftyThing, function(p
 });
 }}}
 
-=== Observations ===
+=== 4 - Observations ===
 
 Sure enough, we're now seeing significantly less boilerplate code and that's translating into fewer lines (nearly a quarter fewer), fewer characters, increased reliability (less retyping = fewer mistakse), increased flexibility (if we want to change the boilerplate), and (subjectively) increased clarity.
 
-== Three-Level Hierarchy with Anonymous Functions ==
+== Example 5: Three-Level Hierarchy with Anonymous Functions ==
 
 But what if you don't care about functions having names, would the "plain" anonymous version be better? Let's find out:
 
-=== Plain !JavaScript ===
+=== 5 - Plain !JavaScript ===
 
 {{{
 var Thing = (function() {
@@ -489,7 +489,7 @@ var ReallyNiftyThing = (function(parent) {
 
 Very little changed there. A few lines shorter, but the boilerplate code is the same, and still has to be repeated.
 
-=== Lineage ===
+=== 5 - Lineage ===
 
 {{{
 var Thing = Lineage.define(function(p) {
@@ -553,7 +553,7 @@ var ReallyNiftyThing = Lineage.define(NiftyThing, function(p, pp) {
 
 And similarly only small changes here as well.
 
-=== Observations ===
+=== 5 - Observations ===
 
 The advantages are the same as the version with named functions; making them anonymous didn't buy us anything. The Lineage code eliminates the repeated boilerplate with the same benefits in terms of code size, reliability, flexibility, and clarity.
 

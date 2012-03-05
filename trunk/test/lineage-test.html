@@ -1,0 +1,296 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Lineage Test Page</title>
+<style type='text/css'>
+body {
+    font-family: sans-serif;
+}
+.divider {
+    padding-top: 1em;
+    border-top: 1px solid;
+}
+.good {
+    color: green;
+    font-weight: bold;
+}
+.bad {
+    color: #a00;
+    font-weight: bold;
+}
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script>var Lineage = "foo"; /* For testing `noConflict` */</script>
+<script src="lineage-ccsimple-0.3.js"></script>
+<script>
+jQuery(function($) {
+    var join = Array.prototype.join,
+        outputs,
+        OurLineage,
+        InnerLineage,
+        errorCount = 0;
+
+    OurLineage = Lineage.noConflict(function(L) {
+        // Test noConflict
+        if (Lineage !== "foo") {
+            display("ERROR: <code>noConflict</code> didn't restore previous value of <code>Lineage</code> global", "bad");
+        }
+        InnerLineage = L;
+    });
+    if (OurLineage !== InnerLineage) {
+        display("ERROR: <code>noConflict</code> didn't return the same object it passed into the callback");
+    }
+    $("#theButton").click(function() {
+        // Anonymous constructor and functions
+        var Anon = OurLineage.define({
+            initialize: function() {
+                console.log("Anon_initialize: " + join.call(arguments));
+                debugger;
+            }
+        });
+
+        // Named constructor and functions
+        var Named = OurLineage.define("Named", function(p) {
+            p.initialize = Named_initialize;
+            function Named_initialize() {
+                console.log("Named_initialize: " + join.call(arguments));
+                debugger;
+            }
+        });
+
+        // A parent constructor
+        var Parent = OurLineage.define("Parent", function(p) {
+            p.initialize = Parent_initialize;
+            function Parent_initialize(parentField) {
+                this.parentField = parentField;
+                display("Parent_initialize: " + join.call(arguments));
+            }
+            p.test1 = Parent_test1;
+            function Parent_test1() {
+                display("Parent_test1: " + this.parentField + "; " + join.call(arguments));
+            }
+            p.test2 = Parent_test2;
+            function Parent_test2() {
+                display("Parent_test2: " + this.parentField + "; " + join.call(arguments));
+            }
+            p.test3 = Parent_test3;
+            function Parent_test3() {
+                display("Parent_test3: " + this.parentField + "; " + join.call(arguments));
+            }
+            p.test4 = Parent_test4;
+            function Parent_test4() {
+                display("Parent_test4: " + this.parentField + "; " + join.call(arguments));
+            }
+            p.nifty = Parent_nifty;
+            function Parent_nifty() {
+                display("Parent_nifty: " + this.parentField + "; " + join.call(arguments));
+            }
+        });
+
+        // A child constructor, overrides `test1` and `test2` but not `test3`
+        var Child = OurLineage.define("Child", Parent, function(p, pp) {
+            p.initialize = Child_initialize;
+            function Child_initialize(parentField, childField) {
+                pp.initialize.call(this, parentField);
+                this.childField = childField;
+                display("Child_initialize: " + join.call(arguments));
+            }
+            p.test1 = Child_test1;
+            function Child_test1() {
+                // Test using `apply`
+                pp.test1.apply(this, arguments);
+                display("Child_test1: " + join.call(arguments));
+            }
+            p.test2 = Child_test2;
+            function Child_test2(arg1, arg2) {
+                // Test using `call`
+                pp.test2.call(this, arg1, arg2);
+                display("Child_test2: " + join.call(arguments));
+            }
+        });
+
+        // A grandchild constructor, overrides `test2` and `test3` but not `test1`;
+        // introduces `test4`
+        var GrandChild = OurLineage.define("GrandChild", Child, function(p, pp, ctor, parentCtor) {
+            p.initialize = GrandChild_initialize;
+            function GrandChild_initialize() {
+                pp.initialize.apply(this, arguments);
+            }
+            p.test2 = GrandChild_test2;
+            function GrandChild_test2() {
+                pp.test2.apply(this, arguments);
+                display("GrandChild_test2: " + join.call(arguments));
+            }
+            p.test3 = GrandChild_test3;
+            function GrandChild_test3(arg1, arg2) {
+                pp.test3.apply(this, arguments);
+                display("GrandChild_test3: " + join.call(arguments));
+            }
+            p.test4 = GrandChild_test4;
+            function GrandChild_test4(arg1, arg2) {
+                var obj;
+
+                pp.test4.call(this, arg1, arg2);
+                display("GrandChild_test4: " + join.call(arguments));
+                // Test constructing a new parent object and calling into it
+                pp.test1.call(this, arg1, arg2);
+                obj = new pp.constructor("p4", "c3");
+                if (p.constructor !== ctor) {
+                    log("ERROR: <code>p.constructor !== ctor</code>", "bad");
+                }
+                if (pp.constructor !== parentCtor) {
+                    log("ERROR: <code>pp.constructor !== parentCtor</code>", "bad");
+                }
+                obj.nifty("Hi");
+            }
+            p.test5 = GrandChild_test5;
+            function GrandChild_test5(arg1, arg2) {
+                // Test that we successfully detect there's no superfunction
+                if (pp.test5) {
+                    pp.test5.apply(this, arguments);
+                }
+                display("GrandChild_test5: " + join.call(arguments));
+            }
+        });
+
+        var a = new Anon();
+        var n = new Named();
+        var p = new Parent("p1");
+        var c = new Child("p2", "c1");
+        var gc = new GrandChild("p3", "c2");
+
+        test(p,  "p",  "test1", [
+            "Parent_test1: p1; a,b"
+        ]);
+        test(c,  "c",  "test1", [
+            "Parent_test1: p2; a,b",
+            "Child_test1: a,b"
+        ]);
+        test(gc, "gc", "test1", [
+            "Parent_test1: p3; a,b",
+            "Child_test1: a,b"
+        ]);
+
+        test(p,  "p",  "test2", [
+            "Parent_test2: p1; a,b"
+        ]);
+        test(c,  "c",  "test2", [
+            "Parent_test2: p2; a,b",
+            "Child_test2: a,b"
+        ]);
+        test(gc, "gc", "test2", [
+            "Parent_test2: p3; a,b",
+            "Child_test2: a,b",
+            "GrandChild_test2: a,b"
+        ]);
+
+        test(p,  "p",  "test3", [
+            "Parent_test3: p1; a,b"
+        ]);
+        test(c,  "c",  "test3", [
+            "Parent_test3: p2; a,b"
+        ]);
+        test(gc, "gc", "test3", [
+            "Parent_test3: p3; a,b",
+            "GrandChild_test3: a,b"
+        ]);
+
+        test(p,  "p",  "test4", [
+            "Parent_test4: p1; a,b"
+        ]);
+        test(c,  "c",  "test4", [
+            "Parent_test4: p2; a,b"
+        ]);
+        test(gc, "gc", "test4", [
+            "Parent_test4: p3; a,b",
+            "GrandChild_test4: a,b",
+            "Parent_test1: p3; a,b",
+            "Child_test1: a,b",
+            "Parent_initialize: p4",
+            "Child_initialize: p4,c3",
+            "Parent_nifty: p4; Hi"
+        ]);
+
+        test(gc, "gc", "test5", [
+            "GrandChild_test5: a,b"
+        ]);
+
+        // Force an error to test checking
+        test(gc, "gc", "notest", [
+            "Intentional error to test error checking; ignore"
+        ]);
+
+        // Un-count the forced error
+        --errorCount;
+
+        // Report overall success/failure
+        if (errorCount === 0) {
+            display("Errors: 0 (ignoring the intentional one), all good!", "good");
+        }
+        else {
+            display("Errors: " + errorCount + " (ignoring the intentional one)", "bad");
+        }
+    });
+
+    function test(obj, objname, fname, expect) {
+        var index, length, results, good;
+
+        startTest("Calling <code>" + objname + "." + fname + "('a', 'b')</code>", "divider");
+        try {
+            obj[fname]('a', 'b');
+        }
+        catch (e) {
+            display("Exception: " + (e.message || e.toString()));
+        }
+        results = endTest();
+        good = true;
+        if (expect.length !== results.length) {
+            display("ERROR: Expected " + expect.length + " line(s), got " + results.length, "bad");
+            good = false;
+        }
+        length = Math.max(expect.length, results.length);
+        for (index = 0; index < length; ++index) {
+            if (expect[index] !== results[index]) {
+                good = false;
+                display("ERROR: Expected '" + expect[index] + "', got '" + results[index] + "'", "bad");
+            }
+        }
+        if (good) {
+            display("Success", "good");
+        }
+    }
+
+    function startTest(msg, className) {
+        display(msg, className);
+        outputs = [];
+    }
+    function endTest() {
+        var o = outputs;
+        outputs = undefined;
+        return o;
+    }
+    function display(msg, className) {
+        log(msg, className);
+        if (outputs) {
+            outputs.push(msg);
+        }
+    }
+    function log(msg, className) {
+        var p = $("<p>").html(msg).appendTo(document.body);
+        if (className) {
+            p.addClass(className);
+            if (className === "bad") {
+                ++errorCount;
+            }
+        }
+    }
+});
+</script>
+</head>
+<body>
+<p>A cheap-and-cheerful test page for Lineage. If you run this with a debugger open, you can
+test that functions do (or don't) have real names, as appropriate.</p>
+<input type='button' id='theButton' value='Go'>
+</body>
+</html>

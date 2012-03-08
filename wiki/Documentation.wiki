@@ -54,8 +54,8 @@ t.spiffy(); // Logs "I'm a spiffy thing"
 There's no hierarchy in that example, but it nicely demonstrates the basics:
 
  * You call `Lineage.define` to define (create) a new constructor function.
- * You pass in a reference to a function (although you can pass in an object instead; more below).
- * Lineage generates a constructor function for you, then calls the function, passing in the constructor's prototype object (in the above, we've called the object *`p`* -- for "prototype" or "public" -- but of course you can call it anything you want).
+ * You pass in a reference to a function (although you can pass in an object instead; more below); we call this the _specification function_ (as it will be used to specify your constructor and its prototype).
+ * Lineage generates a constructor function for you, then calls the specification function you passed in, giving it the constructor's prototype object as an argument (in the above, we've called the object *`p`* -- for "prototype" or "public" -- but of course you can call it anything you want).
  * `Lineage.define` returns a reference to the generated constructor function.
  * You can _optionally_ pass in a name (as a string) to give the constructor, as the first argument to `Lineage.define`. If you don't, the constructor will be anonymous.
 
@@ -118,20 +118,20 @@ var NiftyThing = Lineage.define("NiftyThing", Thing, function(p) {
     }
 });
 
-var p = new Thing();
-p.spiffy();  // Logs "Thing_spiffy"
-p.cool();    // Logs "Thing_cool"
+var t = new Thing();
+t.spiffy();  // Logs "Thing_spiffy"
+t.cool();    // Logs "Thing_cool"
 
-var c = new NiftyThing();
-c.spiffy();  // Logs "NiftyThing_spiffy"
-c.cool();    // Logs "Thing_cool"
+var nt = new NiftyThing();
+nt.spiffy();  // Logs "NiftyThing_spiffy"
+nt.cool();    // Logs "Thing_cool"
 }}}
 
 In that example, `Thing` defines the functions `spiffy` and `cool`. `NiftyThing` uses `Thing` as its parent and so inherits `Thing`'s functions, but then overrides `spiffy` with its own version. So when we call `spiffy`, we see the version specific to `NiftyThing`, but when we call `cool` we see the parent's version, since `NiftyThing` doesn't override it.
 
 == Calling parent functions ==
 
-In our example above, suppose `NiftyThing_spiffy` wanted to call `Thing_spiffy` (e.g., call the parent version of a function, sometimes called a "supercall"), how would it do that? The standard !JavaScript way would be to do this:
+In our example above, suppose `NiftyThing_spiffy` wanted to call `Thing_spiffy` (e.g., call the parent version of a function, sometimes called a "supercall"), how would it do that? The standard !JavaScript way would be like this:
 
 {{{
 function NiftyThing_spiffy() {
@@ -141,7 +141,7 @@ function NiftyThing_spiffy() {
 
 _(If you're not familiar with the_ `call` _and_ `apply` _features of !JavaScript functions, see [http://es5.github.com/#x15.3.4.3 §15.3.4.3] and [http://es5.github.com/#x15.3.4.4 §15.3.4.4] of the spec. Basically, they let you call a function and tell it what_ `this` _should be.)_
 
-Ugh, you have to write `Thing.prototype` all over the place, which is both verbose and repetitive (all those changes, if you decide to insert a new inheritance layer between them).
+Ugh, you have to write `Thing.prototype` all over the place, which is both verbose and repetitive (all those changes, if you decide to insert a new inheritance layer between them). _(There are shorter ways to do this if you use some boilerplate code -- as shown in the [ComparisonWithPlainJavaScript comparison with plain JavaScript] -- but getting rid of repeated boilerplate code is usually a Good Thing^(tm)^.)_
 
 With Lineage, you have a simpler, more concise option: The factory function you pass into `Lineage.define` receives a second argument we haven't mentioned yet: The parent prototype. So:
 {{{
@@ -267,7 +267,7 @@ var Thing = Lineage.define("Thing", function(p) {
 
 Note that to define a private function, you just define it and don't put it on `p`. That's it.
 
-Your private functions will be instance functions or not depending on how you call them. If you call them such that you set what `this` will be during the call, they're instance functions (see our call to `shout` above). If not, they're not instance-specific and you don't use `this` within them. (This latter category are called "static" or "class" functions in class-based OOP.)
+Your private functions will be instance functions or not depending on how you call them. If you call them such that you set what `this` will be during the call, they're instance functions (see our call to `shout` above). If not, they're not instance-specific and you don't use `this` within them. (This latter category are called "static" or "class" functions in class-based OOP.) Remember that !JavaScript [http://blog.niftysnippets.org/2008/03/mythical-methods.html doesn't have methods], just functions; what `this` is during a function call [http://blog.niftysnippets.org/2008/04/you-must-remember-this.html depends entirely on how you call it].
 
 = API =
 

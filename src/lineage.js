@@ -6,10 +6,11 @@
     'lineage.js - http://code.google.com/p/lineagejs',
 
     'Copyright (C) 2009-2012 by Thomas ("T.J.") Crowder (tj@crowdersoftware.com)',
-    'Licensed under the Creative Commons Attribution License 2.0 (UK)',
-    'http://creativecommons.org/licenses/by/2.0/uk/',
+    'Licensed under the "MIT License":',
+    'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:',
+    'The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.',
+    'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.'
 
-    'This copyright notice MUST accompany ALL copies of the work, and must not be altered'
     // ============================================================================================
     ].join(" | ");
     // (See "Copyright note" below)
@@ -40,10 +41,9 @@
     -----
 
     Copyright note: Making the copyright above a public string is a convenience thing, helping
-    ensure it survives most minifiers / compressors / packers / etc. you might throw a it without
-    your having to do anything. If you don't like it being an in-memory string, you're welcome to
-    turn it into a comment, just make sure it is included in the minified/compressed/packed/etc.
-    file.
+    ensure it survives most minifiers / compressors / packers / etc. without your having to do
+    anything. If you don't like it being an in-memory string, you're welcome to turn it into a
+    comment, just make sure it is included in the minified/compressed/packed/etc. file.
 
     ===============================================================================================
     */

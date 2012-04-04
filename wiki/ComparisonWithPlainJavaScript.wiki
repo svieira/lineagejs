@@ -174,7 +174,7 @@ var NiftyThing = (function(parent) {
 })(Thing);
 }}}
 
-Now we get into needing to supply the plumbing for inheritance. It's getting verbose, and if we have to do it a second time, repetitive. We have to create a function (called `proxy`) to generate the prototype for our child constructor, since we don't want to call the parent constructor as it expects to receive arguments. (On systems with [http://es5.github.com/#x15.2.3.5 Object.create], we could save two lines of code there.) Then we have to put the parent prototype on the proxy, call it to create the child prototype, set the child prototype constructor correctly, and grab references to the child and parent prototypes for convenient use. We could tuck some of that away in a utility function, but of course, that's what Lineage is -- a utility toolkit.
+Now we get into needing to supply the plumbing for inheritance. It's getting verbose, and if we have to do it a second time, repetitive. We have to create a function (called `proxy`) to generate the prototype for our child constructor, since we don't want to call the parent constructor as it expects to receive arguments. (On systems with <tt>[http://es5.github.com/#x15.2.3.5 Object.create]</tt>, we could save two lines of code there.) Then we have to put the parent prototype on the proxy, call it to create the child prototype, set the child prototype constructor correctly, and grab references to the child and parent prototypes for convenient use. We could tuck some of that away in a utility function, but of course, that's what Lineage is -- a utility toolkit.
 
 === 3 - Lineage ===
 

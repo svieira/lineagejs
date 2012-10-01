@@ -60,7 +60,7 @@
     getTypeString = Object.prototype.toString;
     oldLineage = global.Lineage;
     global.Lineage = Lineage;
-    Lineage.version = "0.3";
+    Lineage.version = "0.4";
 
     // ==== Public Functions ======================================================================
 

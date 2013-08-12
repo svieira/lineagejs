@@ -198,6 +198,7 @@ var NiftyThing = Lineage.define("NiftyThing", Thing, function(p, pp) {
 
         // ...other stuff...
     }
+});
 }}}
 
 Note that there we assumed the signature of `Thing#initialize` is different from that of `NiftyThing#initialize`. If they're the same, though (both take the same arguments), you can do this instead:
@@ -207,6 +208,27 @@ pp.initialize.apply(this, arguments);
 }}}
 
 Note, though, that using the `arguments` pseudo-array has [http://jsperf.com/using-declared-arguments-vs-the-arguments-pseudo-array performance implications] on many !JavaScript engines, so it's best to avoid using it if you don't have to. (They're not _terrible_, don't worry too much about it -- and Lineage has to use `arguments` internally in a couple of places -- but still worth noting.)
+
+== "Static" or "Class" Members ==
+
+In addition to the prototype (`p`) and parent prototype (`pp`), you can access the constructor function being defined as well and add properties to it:
+
+{{{
+var Thing = Lineage.define("Thing", function(p, pp, ctor) {
+    // Note the third argument ---------------------^
+
+    // Add to it to add to the function you'll call `Thing`
+    ctor.staticMethod = function() {
+        console.log("Static method");
+    };
+    ctor.answer = 42;
+});
+
+Thing.staticMethod();      // "Static method"
+console.log(Thing.answer); // "42"
+}}}
+
+You can access the parent constructor function as well, it's the fourth argument to your specification function.
 
 == Private Data, Private Functions ==
 
@@ -282,7 +304,7 @@ The main Lineage function: Defines a constructor with a prototype defined by the
  * `name` - (Optional string) A name for the constructor, if any; if not given, the constructor will be anonymous.
  * `parent` - (Optional function) The parent constructor, if any.
  * `...` - (Optional) Zero or more specification functions or objects:
-  * A _specification function_ is a function that Lineage will call to define the prototype of the constructor. This is what nearly all of the examples in this documentation have used. The function is called with four arguments: the prototype of the newly-defined constructor function, the prototype of the parent constructor (or `undefined` if none), the newly-defined constructor function, and the parent constructor function (or `undefined` if none). Normally, the function adds properties to the given prototype (the first argument) and doesn't return anything. Optionally, though, you can build your own object with items you want added to the prototype and return it; Lineage will copy its properties to the constructor's prototype.
+  * A _specification function_ is a function that Lineage will call to define the prototype of the constructor. This is what nearly all of the examples in this documentation have used. The function's signature is: `function(p, pp, ctor, pctor)` where: `p` is the prototype of the newly-defined constructor function, `pp` is the prototype of the parent constructor (or `undefined` if none), `ctor` is the newly-defined constructor function, and `pctor` is the parent constructor function (or `undefined` if none). Normally, your code in this function adds properties the given prototype (`p`, the first argument) and doesn't return anything. Optionally, though, you can build your own object with items you want added to the prototype and return it; Lineage will copy its properties to the constructor's prototype.
   * A _specification object_ is just an object to use directly to define the properties for the prototype; all of the properties of the specification object (including inherited properties) are copied to the constructor's prototype.
  You can mix specification objects and specification functions as you wish.
 
